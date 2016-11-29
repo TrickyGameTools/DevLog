@@ -2,3 +2,6 @@
 *.exe
 *.MKL.ini
 MKL_Backup/*
+.bmx/*
+._*
+.DS_Store
