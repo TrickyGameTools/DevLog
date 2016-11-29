@@ -478,16 +478,18 @@ Type API
 		echo "Git is collecting data"
 		?Win32
 		Local gitc$="~qC:\program files\git\bin\git~q add -A > ~q"+Replace(Swapdir,"/","\")+"GitResult.txt~q"; Print gitc
+		Local gitbatch$ = gitc$
 		system_ gitc
 		?Not win32
-		system_ "git add -A > ~q"+Swapdir+"GitResult.txt~q"
+		'system_ "git add -A > ~q"+Swapdir+"GitResult.txt~q"
 		?
 		If Not FileType(Swapdir+"GitResult.txt") echo "Output not caught" Else echo LoadString(Swapdir+"GitResult.txt"),255,180,0
 		echo "Git is submitting"
 		?win32
+		gitbatch:+"~n~qC:\program files\git\Bin\git~q commit -m ~qUpdate in Windows~q"
 		gitc = "~qC:\program files\git\bin\git~q commit -m ~qDevLog Update: "+CurrentDate()+"; "+CurrentTime()+" CET~n~n"+Commit+"~n~n+"+C+"~q > ~q"+Swapdir+"GitResult.txt~q"
 		Print gitc
-		system_ gitc
+		'system_ gitc
 		?Not win32
 		system_ "git commit -m ~qDevLog Update: "+CurrentDate()+"; "+CurrentTime()+" CET~n~n"+Commit+"~n~n+"+C+"~q > ~q"+Replace(Swapdir,"/","\")+"GitResult.txt~q"
 		?
@@ -496,7 +498,11 @@ Type API
 		?win32
 		gitc= "~qC:\program files\git\bin\git~q push > ~q"+Replace(Swapdir,"/","\")+"GitResult.txt~q"
 		Print gitc
-		system_ gitc
+		'system_ gitc
+		gitbatch:+"~n"+gitc
+		gitbatch:+"~npause"
+		SaveString gitbatch,"wingitpush.bat"
+		system_ "wingitpush.bat"
 		?Not win32
 		system_ "git push > ~q"+Swapdir+"GitResult.txt~q"
 		?
