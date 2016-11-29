@@ -479,7 +479,7 @@ Type API
 		?Win32
 		Local gitc$="~qC:\program files\git\bin\git~q add -A > ~q"+Replace(Swapdir,"/","\")+"GitResult.txt~q"; Print gitc
 		Local gitbatch$ = gitc$
-		system_ gitc
+		'system_ gitc
 		?Not win32
 		'system_ "git add -A > ~q"+Swapdir+"GitResult.txt~q"
 		?
