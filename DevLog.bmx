@@ -91,6 +91,8 @@ Const luabase$ = "if not <cmd> then DL.err('Unknown command') else <cmd>(<para>)
 
 Global OLines:TList = New TList
 
+Global htmli:Long
+
 Function ECHO(T$="",FR=255,FG=255,FB=255,BR=0,BG=0,BB=0)
 	If T ListAddLast Olines,"<pre style='color: #"+Right(Hex(fr),2)+Right(Hex(FG),2)+Right(Hex(FB),2)+"; backgroundcolor: #"+Right(Hex(fr),2)+Right(Hex(FG),2)+Right(Hex(FB),2)+"'>"+T+"</pre>"
 	While CountList(Olines)>500 olines.removefirst() Wend
@@ -101,7 +103,8 @@ Function ECHO(T$="",FR=255,FG=255,FB=255,BR=0,BG=0,BB=0)
 	Next
 	WriteLine bt,"~t<a name='bottom' id='bottom'></a></body>~n</html>"
 	CloseFile bt
-	HtmlViewGo html,outhtml+"#bottom"
+	htmli:+1
+	HtmlViewGo html,outhtml+"?i="+htmli+"#bottom"
 	PollEvent
 End Function
 ?MacOS
@@ -718,6 +721,7 @@ Function Execute(C$)
 	Local com$ = Upper(P[0])
 	Local para$
 	Local i,tp$
+	Print "command = "+com
 	If com="BYE" Or com="EXIT" Or Com="SUICIDE" Or COM="CALLITADAY" com="ENDDEV"
 	For i=1 Until Len P
 		para:+P[i]+" "
@@ -736,7 +740,7 @@ Function Execute(C$)
 	If Not instance
 		DL.err("Syntax Error!")
 	EndIf	
-	If Not nook echo "Ok",0,180,255
+	If Not nook echo "Ok",0,180,255; Print "All ok"
 	nook=False
 End Function
 
