@@ -485,8 +485,8 @@ Type API
 		If Not FileType(Swapdir+"GitResult.txt") echo "Output not caught" Else echo LoadString(Swapdir+"GitResult.txt"),255,180,0
 		echo "Git is submitting"
 		?win32
-		Print gitc
 		gitc = "~qC:\program files\git\bin\git~q commit -m ~qDevLog Update: "+CurrentDate()+"; "+CurrentTime()+" CET~n~n"+Commit+"~n~n+"+C+"~q > ~q"+Swapdir+"GitResult.txt~q"
+		Print gitc
 		system_ gitc
 		?Not win32
 		system_ "git commit -m ~qDevLog Update: "+CurrentDate()+"; "+CurrentTime()+" CET~n~n"+Commit+"~n~n+"+C+"~q > ~q"+Replace(Swapdir,"/","\")+"GitResult.txt~q"
