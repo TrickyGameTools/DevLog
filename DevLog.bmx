@@ -38,6 +38,10 @@ Import    brl.maxlua
 Import	  brl.eventqueue
 Import    tricky_units.prefixsuffix
 
+?win32
+Import "devlog.o"
+?
+
 AppTitle = StripAll(AppFile)
 ?Debug
 AppTitle:+" - DEBUG BUILD"
