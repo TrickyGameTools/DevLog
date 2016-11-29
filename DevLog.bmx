@@ -393,6 +393,7 @@ Type API
 		If Not project Return dl.Err("No Project")
 		If Not Project.C("TARGET") Return dl.err("No Target")
 		If Not Project.C("TEMPLATE") Return dl.err("No Template")
+		If Not FileType(Project.C("Template")) Return dl.err("Template not found: "+Project.C("Template"))
 		Local pages = Ceil(entries/Double(200))
 		Local countdown = entries
 		Local cdpage
@@ -475,14 +476,31 @@ Type API
 		GEN
 		ChangeDir project.C("TARGET")
 		echo "Git is collecting data"
+		?Win32
+		Local gitc$="~qC:\program files\git\bin\git~q add -A > ~q"+Replace(Swapdir,"/","\")+"GitResult.txt~q"; Print gitc
+		system_ gitc
+		?Not win32
 		system_ "git add -A > ~q"+Swapdir+"GitResult.txt~q"
-		echo LoadString(Swapdir+"GitResult.txt"),255,180,0
+		?
+		If Not FileType(Swapdir+"GitResult.txt") echo "Output not caught" Else echo LoadString(Swapdir+"GitResult.txt"),255,180,0
 		echo "Git is submitting"
-		system_ "git commit -m ~qDevLog Update: "+CurrentDate()+"; "+CurrentTime()+" CET~n~n"+Commit+"~n~n+"+C+"~q > ~q"+Swapdir+"GitResult.txt~q"
-		echo LoadString(Swapdir+"GitResult.txt"),255,180,0
+		?win32
+		Print gitc
+		gitc = "~qC:\program files\git\bin\git~q commit -m ~qDevLog Update: "+CurrentDate()+"; "+CurrentTime()+" CET~n~n"+Commit+"~n~n+"+C+"~q > ~q"+Swapdir+"GitResult.txt~q"
+		system_ gitc
+		?Not win32
+		system_ "git commit -m ~qDevLog Update: "+CurrentDate()+"; "+CurrentTime()+" CET~n~n"+Commit+"~n~n+"+C+"~q > ~q"+Replace(Swapdir,"/","\")+"GitResult.txt~q"
+		?
+		If Not FileType(Swapdir+"GitResult.txt") echo "Output not caught" Else echo LoadString(Swapdir+"GitResult.txt"),255,180,0
 		echo "Git is pushing"
+		?win32
+		gitc= "~qC:\program files\git\bin\git~q push > ~q"+Replace(Swapdir,"/","\")+"GitResult.txt~q"
+		Print gitc
+		system_ gitc
+		?Not win32
 		system_ "git push > ~q"+Swapdir+"GitResult.txt~q"
-		echo LoadString(Swapdir+"GitResult.txt"),255,180,0
+		?
+		If Not FileType(Swapdir+"GitResult.txt") echo "Output not caught" Else echo LoadString(Swapdir+"GitResult.txt"),255,180,0
 		ChangeDir cd
 		Commit = ""
 		count = Rand(10,20)
