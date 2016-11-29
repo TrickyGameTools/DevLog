@@ -72,6 +72,7 @@ CreateMenu "Cut"  ,2000,editmenu,key_x,modifier_command
 CreateMenu "Copy" ,2001,editmenu,key_C,modifier_command
 CreateMenu "Paste",2002,editmenu,key_V,modifier_command
 
+UpdateWindowMenu win
 
 SetGadgetColor prompt,180,0,255,False
 SetGadgetColor prompt, 45,0, 64,True
