@@ -20,7 +20,7 @@ Rem
 		
 	Exceptions to the standard GNU license are available with Jeroen's written permission given prior 
 	to the project the exceptions are needed for.
-Version: 16.09.07
+Version: 16.12.24
 End Rem
 Strict
 
@@ -47,7 +47,7 @@ AppTitle = StripAll(AppFile)
 AppTitle:+" - DEBUG BUILD"
 ?
 
-MKL_Version "DevLog - DevLog.bmx","16.09.07"
+MKL_Version "DevLog - DevLog.bmx","16.12.24"
 MKL_Lic     "DevLog - DevLog.bmx","GNU General Public License 3"
 
 Global Win:TGadget = CreateWindow(StripDir(AppFile),0,0,ClientWidth(Desktop())*.95,ClientHeight(Desktop())*.95,Null,Window_titlebar | Window_center | Window_Menu)
@@ -93,6 +93,14 @@ Global OLines:TList = New TList
 
 Global htmli:Long
 
+Type tCDPrefix
+	Field CD,resetCD
+	Field prefix$
+End Type
+
+Global cdprefix:TMap = New TMap
+
+
 Function ECHO(T$="",FR=255,FG=255,FB=255,BR=0,BG=0,BB=0)
 	If T ListAddLast Olines,"<pre style='color: #"+Right(Hex(fr),2)+Right(Hex(FG),2)+Right(Hex(FB),2)+"; backgroundcolor: #"+Right(Hex(fr),2)+Right(Hex(FG),2)+Right(Hex(FB),2)+"'>"+T+"</pre>"
 	While CountList(Olines)>500 olines.removefirst() Wend
@@ -103,8 +111,12 @@ Function ECHO(T$="",FR=255,FG=255,FB=255,BR=0,BG=0,BB=0)
 	Next
 	WriteLine bt,"~t<a name='bottom' id='bottom'></a></body>~n</html>"
 	CloseFile bt
+	?macos
+	HtmlViewGo html,outhtml+"#bottom"
+	?win32
 	htmli:+1
 	HtmlViewGo html,outhtml+"?i="+htmli+"#bottom"
+	?
 	PollEvent
 End Function
 ?MacOS
@@ -172,6 +184,18 @@ End Function
 
 Global lastdate$ = "Shit!"
 
+Function cdupdate()
+	Local c:tcdprefix
+	ClearList project.list("CDPREFIX")
+	For Local key$=EachIn MapKeys(CDPREFIX)
+		c = tcdprefix(MapValueForKey(cdprefix,key))
+		project.add "CDPREFIX","NEW:"+key
+		project.add "CDPREFIX","CD:"+c.cd
+		project.add "CDPREFIX","RESET:"+c.resetcd
+		project.add "CDPREFIX","PREFIX:"+c.prefix
+	Next			
+End Function
+
 Type API
 
         Field Commit$ = ""
@@ -180,6 +204,19 @@ Type API
         Method Cls()
 		ClearList olines
 		echo
+	End Method
+	
+	Method SETCDPREFIX(E$)
+		Local p$[] = e.split(";")
+		If (Len P)<4 Return err ("Invalid input. 4 parameters expected. I got "+(Len p))
+		Local c:tcdprefix = New tcdprefix
+		c.cd = p[1].toint()
+		c.resetcd = p[2].toint()
+		c.prefix = p[3]
+		MapInsert cdprefix,Upper(p[0]),c
+		Echo "ID: "+P[0]+"; CD: "+P[1]+"; Reset: "+P[2]+"; Prefix: "+P[3]
+		project.CList "CDPREFIX"
+		cdupdate
 	End Method
 	
 	Method err(E$)
@@ -238,6 +275,24 @@ Type API
 		LoadIni prjdir+"/"+C+".prj",project
 		project.D("NAME",C)
 		CountEntries
+		project.CList("CDPREFIX",1)
+		Local cd:Tcdprefix = New tcdprefix
+		Local cdout$=""
+		For Local l$=EachIn project.list("CDPREFIX")
+			Local p=l.find(":")
+			Local cc$=l[..p]
+			Local cv$=l[p+1..]
+			Select cc
+				Case "ID","NEW"	cd=New tcdprefix
+						MapInsert cdprefix,cv,cd
+						cdout:+"~nCreated cdprefix record: "+cv
+				Case "CD"	cd.cd=cv.toint()
+				Case "RESET"	cd.resetcd=cv.toint()
+				Case "PREFIX"	cd.prefix=cv
+				Default		cdout:+"~n WARNING! Unknown command: "+l
+			End Select
+		Next			
+		echo cdout,0,180,255
 		echo "Project ok"
 	End Method
 	
@@ -268,6 +323,17 @@ Type API
 		
 	Method ADDEntry(C$)
 		If Not project Return dl.Err("No Project")
+		For Local k$=EachIn MapKeys(cdprefix)
+			Local cd:tcdprefix = tcdprefix(MapValueForKey(cdprefix,k))
+			cd.cd:-1
+			If cd.cd<=0 
+				c = cd.prefix+" "+c
+				cd.cd=cd.resetcd
+			Else
+				echo "Auto add prefix ~q"+k+"~q after "+cd.cd+" more addition(s)"
+			EndIf
+			cdupdate
+		Next 
 		c = Trim(C)
 		c = Replace(c,"~n","<br>")
 		Local space = C.find(" ")
@@ -524,13 +590,26 @@ Type API
 	
 
 	
-	Method Tags()
+	Method Tags(used$)
 		If Not project Return dl.Err("No Project")
 		Local o$ = "<ol type=i>"
 		project.clist "TAGS",True
 		SortList project.list("Tags")
 		For Local t$ = EachIn project.list("Tags")
-			o:+ "<li style='"+project.C("INHD."+t)+"'>"+t+"</li>"
+			o:+ "<li style='"+project.C("INHD."+t)+"'>"+t
+			If used.toupper()="USED" 
+				Local BT:TStream = ReadFile(entryfile())
+				Local ln,e:StringMap,tag$
+				Local u=0
+				Repeat
+					e = nextentry(bt)
+					If Not e Exit
+					If e.value("TAG")=t u:+1
+				Forever
+				CloseFile bt
+				o:+"<br>&nbsp; = Times used: "+u
+			EndIf
+			o:+ "</li>"
 		Next
 		O:+"</ol>"
 		ListAddLast olines,O; echo
