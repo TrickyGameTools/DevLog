@@ -20,7 +20,7 @@ Rem
 		
 	Exceptions to the standard GNU license are available with Jeroen's written permission given prior 
 	to the project the exceptions are needed for.
-Version: 16.12.24
+Version: 16.12.25
 End Rem
 Strict
 
@@ -47,7 +47,7 @@ AppTitle = StripAll(AppFile)
 AppTitle:+" - DEBUG BUILD"
 ?
 
-MKL_Version "DevLog - DevLog.bmx","16.12.24"
+MKL_Version "DevLog - DevLog.bmx","16.12.25"
 MKL_Lic     "DevLog - DevLog.bmx","GNU General Public License 3"
 
 Global Win:TGadget = CreateWindow(StripDir(AppFile),0,0,ClientWidth(Desktop())*.95,ClientHeight(Desktop())*.95,Null,Window_titlebar | Window_center | Window_Menu)
@@ -547,7 +547,7 @@ Type API
 		Local gitbatch$ = gitc$
 		'system_ gitc
 		?Not win32
-		'system_ "git add -A > ~q"+Swapdir+"GitResult.txt~q"
+		system_ "git add -A > ~q"+Swapdir+"GitResult.txt~q"
 		?
 		If Not FileType(Swapdir+"GitResult.txt") echo "Output not caught" Else echo LoadString(Swapdir+"GitResult.txt"),255,180,0
 		echo "Git is submitting"
