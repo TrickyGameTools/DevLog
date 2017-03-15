@@ -4,7 +4,7 @@ Rem
 	
 	
 	
-	(c) Jeroen P. Broks, 2016, All rights reserved
+	(c) Jeroen P. Broks, 2016, 2017, All rights reserved
 	
 		This program is free software: you can redistribute it and/or modify
 		it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ Rem
 		
 	Exceptions to the standard GNU license are available with Jeroen's written permission given prior 
 	to the project the exceptions are needed for.
-Version: 16.12.26
+Version: 17.01.04
 End Rem
 Strict
 
@@ -47,13 +47,14 @@ AppTitle = StripAll(AppFile)
 AppTitle:+" - DEBUG BUILD"
 ?
 
-MKL_Version "DevLog - DevLog.bmx","16.12.26"
+MKL_Version "DevLog - DevLog.bmx","17.01.04"
 MKL_Lic     "DevLog - DevLog.bmx","GNU General Public License 3"
 
 Global Win:TGadget = CreateWindow(StripDir(AppFile),0,0,ClientWidth(Desktop())*.95,ClientHeight(Desktop())*.95,Null,Window_titlebar | Window_center | Window_Menu)
 Global WW = ClientWidth(win)
 Global WH = ClientHeight(win)
-Global HTML:TGadget = CreateHTMLView(0,0,WW,WH-25,win)
+Global HTML:TGadget = CreateHTMLView(0,0,WW,WH-100,win)
+Global Replay:TGadget = CreateListBox(0,WH-100,WW,75,win)
 Global prompt:TGadget = CreateTextField(0,WH-25,WW-100,25,win)
 Global Go:TGadget = CreateButton("Go!",WW-100,WH-25,100,25,win,button_ok)
 
@@ -74,8 +75,10 @@ CreateMenu "Paste",2002,editmenu,key_V,modifier_command
 
 UpdateWindowMenu win
 
-SetGadgetColor prompt,180,0,255,False
-SetGadgetColor prompt, 45,0, 64,True
+SetGadgetColor prompt,180,  0,255,False
+SetGadgetColor prompt, 45,  0, 64,True
+SetGadgetColor replay,  0,180,255,False
+SetGadgetColor replay,  0, 18, 25,True
 
 Global Workdir$ = Dirry("$AppSupport$/$LinuxDot$Phantasar Productions/DevLog")
 Global PrjDir$ = Workdir+"/Projects"
@@ -219,6 +222,17 @@ Type API
 		cdupdate
 	End Method
 	
+	Method CDCheck()
+		Local cd:tcdprefix
+		Local res$
+		For Local k$=EachIn(MapKeys(cdprefix))
+			cd = tcdprefix(MapValueForKey(cdprefix,k))
+			If res res:+"<br>"
+			res:+"Auto add prefix ~q"+k+"~q after "+cd.cd+" more addition(s)"
+		Next
+		echo res,180,255,0,18,25,0
+	End Method
+	
 	Method err(E$)
 		ECHO "ERROR: "+E,255,0,0
 	End Method
@@ -319,6 +333,7 @@ Type API
 			count:-1
 			If count<=0 push "~n~tAuto-push" Else Echo "Auto-push after "+count+" more addition(s)"
 		EndIf	
+		cdcheck
 	End Method
 		
 	Method ADDEntry(C$)
@@ -534,6 +549,7 @@ Type API
 	End Method
 	
 	Method PUSH(C$)	
+		save
 		If Not project Return dl.Err("No Project")
 		If Not Project.C("GITTARGET") Return dl.err("No Git Target")
 		If FileType(Project.C("GITTARGET"))<>2 Return dl.err("No dir access")
@@ -577,6 +593,16 @@ Type API
 		Commit = ""
 		count = Rand(10,20)
 	End Method
+	
+	Method PULL()
+		echo "Pulling"
+		ChangeDir project.C("TARGET")
+		?Not win32
+		system_ "git pull > ~q"+Swapdir+"/GitResult.txt~q"
+		?
+		echo LoadString(swapdir+"GitResult.txt")
+	End Method	
+
 	
 	Method LET(C$)
 		If Not project Return dl.Err("No Project")
@@ -707,6 +733,10 @@ Type API
 		Local start = maxentry-num
 		If start<0 start=0
 		list start + "-"+maxentry + "-"
+	End Method
+	
+	Method CLEARREPLAY(C$)
+		ClearGadgetItems Replay
 	End Method
 	
 	Method MODIFY(C$)
@@ -864,8 +894,14 @@ Repeat
 				command = GadgetText(prompt)
 				echo command,180,0,255
 				SetGadgetText(prompt,"")
+				AddGadgetItem replay,command
 				execute Trim(command)
 			EndIf
+		Case event_Gadgetselect
+			If EventSource()=replay
+				Local s = SelectedGadgetItem(replay)
+				If s>=0 SetGadgetText prompt,GadgetItemText(replay,s)
+			EndIf	
 		Case event_menuaction
 			Select EventData()
 				Case 2000 GadgetCut A
