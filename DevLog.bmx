@@ -40,6 +40,9 @@ Import    tricky_units.prefixsuffix
 
 ?win32
 Import "devlog.o"
+Const FPrefix$ = "WIN"
+?Mac
+Const FPrefix = "MAC"
 ?
 
 AppTitle = StripAll(AppFile)
@@ -220,6 +223,20 @@ Type API
 		Echo "ID: "+P[0]+"; CD: "+P[1]+"; Reset: "+P[2]+"; Prefix: "+P[3]
 		project.CList "CDPREFIX"
 		cdupdate
+	End Method
+	
+	Method CDPREFIXDUMP()
+		Local k$,v$
+		Local dump$
+		Local cd:tcdprefix
+		For k$=EachIn(MapKeys(cdprefix))
+			cd = tcdprefix(MapValueForKey(cdprefix,k))
+			dump$:+k+" = "
+			v = Replace(cd.prefix,"&","&amp;")
+			v = Replace(v,"<","&lt;")
+			dump:+v+"~n"
+		Next
+		echo dump,0,180,255
 	End Method
 	
 	Method CDCheck()
@@ -474,13 +491,19 @@ Type API
 		If Not project Return dl.Err("No Project")
 		If Not Project.C("TARGET") Return dl.err("No Target")
 		If Not Project.C("TEMPLATE") Return dl.err("No Template")
-		If Not FileType(Project.C("Template")) Return dl.err("Template not found: "+Project.C("Template"))
+		Local pcTemplate$ = project.c("TEMPLATE")
+		Global pcTarget$ = project.c("PCTARGET")
+		DebugLog  "FPrefix = "+FPrefix+"   "+project.C("TEMPLATE."+fPrefix)+"   TEMPLATE.WIN="+Project.C("TEMPLATE.WIN")
+		If project.C("TEMPLATE."+FPrefix) pcTemplate = project.C("TEMPLATE."+FPrefix) 
+		If project.C("TARGET."+FPrefix) pcTarget = project.C("TARGET."+FPrefix)
+		If Not FileType(PCTEMPLATE) Return dl.err("Template not found: "+pctemplate)
 		Local pages = Ceil(entries/Double(200))
 		Local countdown = entries
 		Local cdpage
 		Local BT:TStream = ReadFile(entryfile())
 		Local page=pages
-		Local template$ = LoadString(Project.C("Template"))
+		DebugLog "Reading: "+PCTemplate
+		Local template$ = LoadString(PCTEMPLATE)
 		Local content$ = NewPage()
 		Local e:StringMap
 		Local eo$
@@ -490,7 +513,7 @@ Type API
 			content = "<tr valign=top><td colspan=2><big>"+lastdate+"</big></td></tr>~n"+content
 			content = PageLine(pages,page)+"<p><table width='100%'><caption>Live DevLog</caption>~n"+content+"</table><p>"+PageLine(pages,page)
 			echo "Saving page: "+page
-			SaveString Replace(template,"@CONTENT@",content),project.C("TARGET")+"/"+project.C("NAME")+"_Devlog_page"+page+".html"
+			SaveString Replace(template,"@CONTENT@",content),pctarget+"/"+project.C("NAME")+"_Devlog_page"+page+".html"
 			page:-1
 			content =  "" 'NewPage()
 			LastDate = ""
@@ -552,11 +575,13 @@ Type API
 		save
 		If Not project Return dl.Err("No Project")
 		If Not Project.C("GITTARGET") Return dl.err("No Git Target")
-		If FileType(Project.C("GITTARGET"))<>2 Return dl.err("No dir access")
-		If FileType(Project.C("GITTARGET")+"/.git")<>2 Return dl.err("No git access in that directory  (Looking for: "+Project.C("TARGET")+"/.git)  (C"+FileType(Project.C("TARGET")+"/.git")+")")
+		Local pcpush$ = Project.C("GITTARGET")
+		If Project.C("GITTARGET."+fprefix) pcpush = Project.C("GITTARGET."+fprefix)
+		If FileType(pcpush)<>2 Return dl.err("No dir access ("+pcpush+")")
+		If FileType(pcpush+"/.git")<>2 Return dl.err("No git access in that directory  (Looking for: "+Project.C("TARGET")+"/.git)  (C"+FileType(Project.C("TARGET")+"/.git")+")")
 		Local cd$ = CurrentDir()
 		GEN
-		ChangeDir project.C("TARGET")
+		ChangeDir pcpush
 		echo "Git is collecting data"
 		?Win32
 		Local gitc$="~qC:\program files\git\bin\git~q add -A > ~q"+Replace(Swapdir,"/","\")+"GitResult.txt~q"; Print gitc
@@ -569,7 +594,7 @@ Type API
 		echo "Git is submitting"
 		?win32
 		gitbatch:+"~n~qC:\program files\git\Bin\git~q commit -m ~qUpdate in Windows~q"
-		gitc = "~qC:\program files\git\bin\git~q commit -m ~qDevLog Update: "+CurrentDate()+"; "+CurrentTime()+" CET~n~n"+Commit+"~n~n+"+C+"~q > ~q"+Swapdir+"GitResult.txt~q"
+		gitc = "~qC:\program files\git\bin\git~q commit -m ~qDevLog Update: "+CurrentDate()+"; "+CurrentTime()+" CET~n~n"+Commit+"~n~n+"+C+"~q"' > ~q"+Swapdir+"GitResult.txt~q"
 		Print gitc
 		'system_ gitc
 		?Not win32
@@ -578,7 +603,7 @@ Type API
 		If Not FileType(Swapdir+"GitResult.txt") echo "Output not caught" Else echo LoadString(Swapdir+"/GitResult.txt"),255,180,0
 		echo "Git is pushing"
 		?win32
-		gitc= "~qC:\program files\git\bin\git~q push > ~q"+Replace(Swapdir,"/","\")+"\GitResult.txt~q"
+		gitc= "~qC:\program files\git\bin\git~q push "'> ~q"+Replace(Swapdir,"/","\")+"\GitResult.txt~q"
 		Print gitc
 		'system_ gitc
 		gitbatch:+"~n"+gitc
