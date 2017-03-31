@@ -41,7 +41,7 @@ Import    tricky_units.prefixsuffix
 ?win32
 Import "devlog.o"
 Const FPrefix$ = "WIN"
-?Mac
+?MacOS
 Const FPrefix$ = "MAC"
 ?Linux
 Const  FPrefix$ = "LIN"
