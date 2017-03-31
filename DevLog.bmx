@@ -46,7 +46,7 @@ Const FPrefix$ = "MAC"
 ?Linux
 Const  FPrefix$ = "LIN"
 ? 
-' Originall meant as a prefix, but it became a suffix, but it was too much hassle to change that now. :-P
+' Originally meant as a prefix, but it became a suffix, but it was too much hassle to change that now. :-P
 
 AppTitle = StripAll(AppFile)
 ?Debug
